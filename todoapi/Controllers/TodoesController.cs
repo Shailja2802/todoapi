@@ -1,11 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using todoapi;
 using todoapi.Data;
 
 namespace todoapi.Controllers
@@ -29,34 +26,45 @@ namespace todoapi.Controllers
         }
 
         // GET: api/Todoes/5
-        [HttpGet("{id}")]
-        public async Task<ActionResult<Todo>> GetTodo(long id)
+        [HttpGet("{id:long}")]
+        public async Task<ActionResult<IEnumerable<Todo>>> GetTodo(long id)
         {
-
-            //var todos[] = _context.Todo.ToArrayAsync((e => e.Uid == id));
-
-
-            //  Contact[] contact=contact.<Contact>
-
-            // Todo[] todoes = _context.Todo.Where<Todo >(e=>e.Uid==id).ToArray<Todo>();
-            //   string item = todoes.Items;
-            var todo = await _context.Todo.FindAsync(id);
-           // var todo = await _context.Todo.ToDictionaryAsync(e=>e.Items);
-            //FirstOrDefaultAsync(e=>e.Items  ==item, e=>e.Uid==id );
-            if (todo == null)
+            Todo[] arr = await _context.Todo.Where<Todo>(e => e.Uid==id).ToArrayAsync();
+            
+            if (arr == null)
             {
                 return null;
             }
 
-            return todo;
+            return arr;
         }
+
+
+        // GET: api/Todoes/5
+        [HttpGet("{item}")]
+        public async Task<ActionResult <IEnumerable<Todo>>> GetTodoByItem(string item)
+        {
+
+            
+           Todo []arr =  await _context.Todo.Where<Todo>(e => e.Items.Contains(item)).ToArrayAsync(); 
+            if (arr == null)
+            {
+                return null;
+            }
+            return arr;
+           
+        }
+
+
+
+
 
         // PUT: api/Todoes/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-        [HttpPut("{id}")]
-        public async Task<IActionResult> PutTodo(int id, Todo todo)
+        [HttpPut("{id:long}")]
+        public async Task<IActionResult> PutTodo(long id, Todo todo)
         {
-            if (id != todo.Id)
+            if (id != todo.Uid)
             {
                 return BadRequest();
             }
@@ -94,13 +102,12 @@ namespace todoapi.Controllers
         }
 
         // DELETE: api/Todoes/5
-        [HttpDelete("{id},{item}")]
+        [HttpDelete("{id:long}")]
         public async Task<IActionResult> DeleteTodo(long id,string item)
         {
-
-            Todo todo1 = (Todo)_context.Todo.Where(e => e.Uid == id && (e.Items == item));
-            int iden = todo1.Id;
-            var todo = await _context.Todo.FindAsync(iden);
+            
+            var todo = _context.Todo.Where(e => e.Uid == id && (e.Items == item)).FirstOrDefault();
+           
             if (todo == null)
             {
 
@@ -110,12 +117,12 @@ namespace todoapi.Controllers
             _context.Todo.Remove(todo);
             await _context.SaveChangesAsync();
 
-            return NoContent();
+            return Ok();
         }
 
-        private bool TodoExists(int id)
+        private bool TodoExists(long id)
         {
-            return _context.Todo.Any(e => e.Id == id);
+            return _context.Todo.Any(e => e.Uid == id );
         }
     }
 }
